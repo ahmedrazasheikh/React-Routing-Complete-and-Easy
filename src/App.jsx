@@ -1,240 +1,53 @@
-import { useState, useEffect } from "react";
-import axios from 'axios';
-import moment from 'moment';
-import { initializeApp } from "firebase/app";
-
-import {
-  getFirestore, collection,
-  addDoc, getDocs, doc,
-  onSnapshot, query, serverTimestamp,
-  orderBy, deleteDoc, updateDoc
-
-} from "firebase/firestore";
-
-import './App.css';
 
 
+import React from "react";
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
 
-const firebaseConfig = {
-    apiKey: "AIzaSyD0YLt5ADq9557bj6NeGgp8Mhir4ORwL6s",
-    authDomain: "newsdf-f95ba.firebaseapp.com",
-    databaseURL: "https://newsdf-f95ba-default-rtdb.firebaseio.com",
-    projectId: "newsdf-f95ba",
-    storageBucket: "newsdf-f95ba.appspot.com",
-    messagingSenderId: "631326539188",
-    appId: "1:631326539188:web:b4b517649601cfc8ab06e1",
-    measurementId: "G-HMTMYPQB9L"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+function App () {
 
 
-// Initialize Cloud Firestore and get a reference to the service
-const db = getFirestore(app);
-
-
-
-
-function App() {
-
-  const [postText, setPostText] = useState("");
-  const [posts, setPosts] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const [editing, setEditing] = useState({
-    editingId: null,
-    editingText: ""
-  })
-
-
-
-
-  useEffect(() => {
-
-
-    const getData = async () => {
-      const querySnapshot = await getDocs(collection(db, "posts"));
-
-      querySnapshot.forEach((doc) => {
-        console.log(`${doc.id} => `, doc.data());
-
-        setPosts((prev) => {
-          let newArray = [...prev, doc.data()];
-          return newArray
-        });
-
-      });
-    }
-    // getData();
-
-    let unsubscribe = null;
-    const getRealtimeData = async () => {
-
-      const q = query(collection(db, "posts"), orderBy("createdOn", "desc"));
-
-      unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const posts = [];
-
-        querySnapshot.forEach((doc) => {
-          // posts.unshift(doc.data());
-          // posts.push(doc.data());
-
-          posts.push({ id: doc.id, ...doc.data() });
-
-        });
-
-        setPosts(posts);
-        console.log("posts: ", posts);
-      });
-
-    }
-    getRealtimeData();
-
-    return () => {
-      console.log("Cleanup function");
-      unsubscribe();
-    }
-
-  }, [])
-
-
-
-
-  const savePost = async (e) => {
-    e.preventDefault();
-
-    console.log("postText: ", postText);
-
-    try {
-
-      const docRef = await addDoc(collection(db, "posts"), {
-        text: postText,
-        // createdOn: new Date().getTime(),
-        createdOn: serverTimestamp(),
-      });
-      console.log("Document written with ID: ", docRef.id);
-
-    } catch (e) {
-      console.error("Error adding document: ", e);
-    }
-
-
-  }
-
-  const deletePost = async (postId) => {
-
-    console.log("postId: ", postId);
-
-    await deleteDoc(doc(db, "posts", postId));
-
-  }
-
-  const updatePost = async (e) => {
-    e.preventDefault();
-
-    await updateDoc(doc(db, "posts", editing.editingId), {
-      text: editing.editingText
-    });
-
-    setEditing({
-      editingId: null,
-      editingText: ""
-    })
-
-  }
-
+  const validationSchema = Yup.object({
+    email: Yup
+      .string('Enter your email')
+      .email('Enter a valid email')
+      .required('Email is required'),
+    password: Yup
+      .string('Enter your password')
+      .min(8, 'Password should be of minimum 8 characters length')
+      .required('Password is required'),
+  });
+  const formik = useFormik({
+    initialValues: {
+      email: '',
+      password: '',
+    },
+    validationSchema: validationSchema, 
+    onSubmit: (values) => {
+     console.log(values)
+    },
+  });
 
   return (
     <div>
 
-      <form onSubmit={savePost}>
-        <textarea
-          type="text"
-          placeholder="What's in your mind..."
-          onChange={(e) => {
-            setPostText(e.target.value)
-          }}
-        />
-        <br />
-        <button type="submit">Post</button>
+      <form  onSubmit={formik.handleSubmit} >
+      <label >Email:</label>
+<input type="text"  name="email" onChange={formik.handleChange}  value={formik.values.email}  /> <br /><br />
+
+{/*  */}
+{formik.errors.email && formik.touched.email ?<p className="tr">{formik.errors.email}</p> : null }
+<label>Password:</label>
+<input type="password"   name="password"   value={formik.values.password}  onChange={formik.handleChange} /> <br /><br />
+{/* <p>{formik.errors.password}</p> */}
+{formik.errors.password && formik.touched.password ?<p className="tr" >{formik.errors.password}</p> : null }
+  <button  type="submit" >Click Here</button>
+
+
       </form>
-
-      <div>
-        {(isLoading) ? "loading..." : ""}
-
-        {posts.map((eachPost, i) => (
-          <div className="post" key={i}>
-
-            <h3
-              className="title"
-              href={eachPost?.url}
-              target="_blank" rel="noreferrer"
-            >
-              {(eachPost.id === editing.editingId) ?
-                <form onSubmit={updatePost}>
-
-                  <input
-                    type="text"
-                    value={editing.editingText}
-                    onChange={(e) => {
-                      setEditing({
-                        ...editing,
-                        editingText: e.target.value
-                      })
-                    }}
-                    placeholder="please enter updated value" />
-
-                  <button type="submit">Update</button>
-                </form>
-                :
-                eachPost?.text}
-            </h3>
-
-            <span>{
-              moment(
-                (eachPost?.createdOn?.seconds) ?
-                  eachPost?.createdOn?.seconds * 1000
-                  :
-                  undefined
-              )
-                .format('Do MMMM, h:mm a')
-            }</span>
-
-            <br />
-            <br />
-            <button onClick={() => {
-
-              deletePost(eachPost?.id)
-
-            }}>Delete</button>
-
-            {(editing.editingId === eachPost?.id) ? null :
-              <button onClick={() => {
-
-                setEditing({
-                  editingId: eachPost?.id,
-                  editingText: eachPost?.text
-                })
-
-              }} >Edit</button>
-            }
-
-          </div>
-        ))}
-      </div>
-
     </div>
-  );
+  )
 }
 
-export default App;
 
-
-
-
-
-
-
-
-
+export default App; 
