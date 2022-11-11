@@ -1,55 +1,60 @@
-
-
-import React from "react";
-import { useFormik } from 'formik';
-import * as Yup from 'yup';
-import axios from "axios";
+import './App.css';
+import { useState } from "react";
+import { Routes, Route, Link, Navigate } from "react-router-dom";
+import Login from "./Components/login";
+import Signup from "./Components/signup";
+import Home from "./Components/home";
+import Menu from './Components/Menu';
+import Contact from "./Components/Contact";
+import About from "./Components/About";
 function App () {
+let [isLogin,setIsLogin ] = useState(false)
 
-
-  const validationSchema = Yup.object({
-       name: Yup
-      .string('Enter your password')
-      .min(8, 'Password should be of minimum 8 characters length')
-      .required('Password is required'),
-  });
-  const formik = useFormik({
-    initialValues: {
-      name : '', 
-      profile : '',
-    },
-    validationSchema: validationSchema, 
-    onSubmit:async  (values) => {
-   const data = new FormData()
-data.append("file", values.profile)
-data.append("upload_preset", "qhahkeke")
-data.append("cloud_name","dxm7stflg")
-  const response =   await   fetch(" https://api.cloudinary.com/v1_1/dxm7stflg/image/upload",
-  { method:"post", body: data})
-  const json = await response.json();
-  console.log(json)
-    },
-  });
-
-  return (
+  return(
     <div>
+{isLogin ? 
+  <ul   className='flex-row'>
+            <li> <Link  className='text-decoration-none' to={`/`}>Home</Link> </li>
+            <li> <Link className='text-decoration-none'  to={`contact`}>Contact</Link> </li>
+            <li> <Link className='text-decoration-none'  to={`/about`}>About</Link> </li>
+            <li> <Link className='text-decoration-none'  to={`/menu`}>Menu</Link> </li>
+          </ul>
+ :
+ <ul>
+ <li> <Link className='text-decoration-none'  to={`/`}>Login</Link> </li>
+ <li> <Link className='text-decoration-none'  to={`/signup`}>Signup</Link> </li>
+</ul>
+  }
 
-      <form  onSubmit={formik.handleSubmit} >
+<button  onClick={(e)=>{
+console.log(e);
+setIsLogin(!isLogin)
 
-        <input type="file" name="profile" onChange={(e)=> formik.setFieldValue("profile", e.target.files[0]) }    /> <br />
+}} >Click Here</button>
+{isLogin ?
 
-  <input type="text" onChange={formik.handleChange}  value={formik.name}  name="name"  />
-   <br />  <br />
+<Routes>
+<Route path="/" element={<Home />} />
+<Route path="about" element={<About />} />
+<Route path="Contact" element={< Contact />} />
+<Route path="Menu" element={<Menu />} />
+<Route path="*" element={<Navigate to="/" replace={true} />} />
+</Routes>
+ :
+<Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="Signup" element={<Signup />} />
+          <Route path="Signup" element={<Signup />} />
+          <Route path="*" element={<Navigate to="/" replace={true} />} />
+        </Routes>
 
 
-  <button  type="submit" >Click Here</button>
+  }
 
 
 
-      </form>
+
     </div>
   )
 }
-
-
 export default App; 

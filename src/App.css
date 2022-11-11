@@ -13,6 +13,16 @@ border: 1px solid black;
 .tr{
     color: red;
 }
+.flex-row{
+    display: flex;
+    list-style-type: none;
+}
+.flex-row > li {
+    margin-right: 20px;
+}
+.text-decoration-none{
+    text-decoration: none;
+}
 body{
     background-color:   white;
 }
