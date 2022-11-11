@@ -3,28 +3,31 @@
 import React from "react";
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-
+import axios from "axios";
 function App () {
 
 
   const validationSchema = Yup.object({
-    email: Yup
-      .string('Enter your email')
-      .email('Enter a valid email')
-      .required('Email is required'),
-    password: Yup
+       name: Yup
       .string('Enter your password')
       .min(8, 'Password should be of minimum 8 characters length')
       .required('Password is required'),
   });
   const formik = useFormik({
     initialValues: {
-      email: '',
-      password: '',
+      name : '', 
+      profile : '',
     },
     validationSchema: validationSchema, 
-    onSubmit: (values) => {
-     console.log(values)
+    onSubmit:async  (values) => {
+   const data = new FormData()
+data.append("file", values.profile)
+data.append("upload_preset", "qhahkeke")
+data.append("cloud_name","dxm7stflg")
+  const response =   await   fetch(" https://api.cloudinary.com/v1_1/dxm7stflg/image/upload",
+  { method:"post", body: data})
+  const json = await response.json();
+  console.log(json)
     },
   });
 
@@ -32,16 +35,15 @@ function App () {
     <div>
 
       <form  onSubmit={formik.handleSubmit} >
-      <label >Email:</label>
-<input type="text"  name="email" onChange={formik.handleChange}  value={formik.values.email}  /> <br /><br />
 
-{/*  */}
-{formik.errors.email && formik.touched.email ?<p className="tr">{formik.errors.email}</p> : null }
-<label>Password:</label>
-<input type="password"   name="password"   value={formik.values.password}  onChange={formik.handleChange} /> <br /><br />
-{/* <p>{formik.errors.password}</p> */}
-{formik.errors.password && formik.touched.password ?<p className="tr" >{formik.errors.password}</p> : null }
+        <input type="file" name="profile" onChange={(e)=> formik.setFieldValue("profile", e.target.files[0]) }    /> <br />
+
+  <input type="text" onChange={formik.handleChange}  value={formik.name}  name="name"  />
+   <br />  <br />
+
+
   <button  type="submit" >Click Here</button>
+
 
 
       </form>
